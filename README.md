@@ -1,59 +1,36 @@
 ﻿# Face Recognition System
 
-A real-time face recognition system using webcam, MTCNN for face detection, FaceNet for face embedding extraction, and Qdrant for vector similarity search.
+This project implements a face recognition system using webcam input. It uses MTCNN for face detection, a ResNet-based model for face embedding extraction, and Qdrant for vector storage and similarity search.
 
 ## Features
 
-- Real-time face detection from webcam feed
-- Face recognition using vector similarity search
-- User registration interface
-- Visualization of detection and recognition results
+- Face detection from webcam using MTCNN
+- Face embedding extraction using InceptionResnetV1 (FaceNet)
+- Vector database storage and retrieval with Qdrant
+- Real-time face recognition with confidence scores
 
 ## Requirements
 
-- Python 3.7+
-- Webcam
-- CUDA-compatible GPU (optional, but recommended for better performance)
+Install the required dependencies:
 
-## Installation
-
-1. Clone this repository:
-   ```
-   git clone https://github.com/yourusername/face-recognition.git
-   cd face-recognition
-   ```
-
-2. Create a virtual environment (optional but recommended):
-   ```
-   python -m venv .venv
-   ```
-
-3. Activate the virtual environment:
-   - Windows:
-     ```
-     .venv\Scripts\activate
-     ```
-   - Linux/Mac:
-     ```
-     source .venv/bin/activate
-     ```
-
-4. Install the required packages:
-   ```
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-### Training with Your Dataset
-
-Before using the application, you can train the system with your own dataset:
-
-```
-python train_face_recognition.py
+```bash
+pip install -r requirements.txt
 ```
 
-The training script expects a dataset organized in the following structure:
+The main dependencies are:
+- mtcnn
+- tensorflow
+- opencv-python
+- numpy
+- qdrant-client
+- facenet-pytorch
+- scikit-learn
+- pillow
+
+## Dataset Structure
+
+The system expects a dataset organized as follows:
+
 ```
 Dataset/
 ├── Person1/
@@ -67,108 +44,75 @@ Dataset/
 └── ...
 ```
 
-Where each subfolder is named after a person and contains their face images.
+Each person should have their own directory containing multiple images of their face. The name of the directory will be used as the person's name in the recognition system.
 
-#### Training Command-line Arguments
+## Usage
 
-The training script accepts the following command-line arguments:
+1. Organize your dataset as described above in the `Dataset` directory.
 
-- `--dataset`: Path to the dataset directory (default: "Dataset")
-- `--db`: Path to store the face database (default: "face_db")
-- `--confidence`: Minimum confidence for face detection (default: 0.9)
+2. Register faces to the database:
 
-Example:
-```
-python train_face_recognition.py --dataset my_custom_dataset --db my_face_database --confidence 0.85
-```
+```bash
+# Register all faces from the dataset
+python register_faces.py
 
-### Running the Application
+# Reset the database and register all faces
+python register_faces.py --reset
 
-After training, run the main application:
+# Register only a specific person
+python register_faces.py --person PersonName
 
-```
-python face_recognition_app.py
-```
-
-### Application Command-line Arguments
-
-The application accepts the following command-line arguments:
-
-- `--db`: Path to store the face database (default: "face_db")
-- `--confidence`: Minimum confidence for face detection (default: 0.9)
-- `--threshold`: Similarity threshold for face recognition (default: 0.7)
-
-Example:
-```
-python face_recognition_app.py --db my_face_database --confidence 0.85 --threshold 0.75
+# Reset a specific person's data and register them again
+python register_faces.py --person PersonName --reset-person
 ```
 
-### Using the Application
+3. Run the face recognition script:
 
-1. **Recognition Mode (Default)**:
-   - The application starts in recognition mode
-   - Detected faces will be highlighted with a green box if recognized, or red if unknown
-   - Recognized faces will display the person's name and confidence score
+```bash
+python face_recognition.py
+```
 
-2. **Registration Mode**:
-   - Press 'r' to enter registration mode
-   - Enter the name of the person to register when prompted
-   - The application will collect 5 face images with different poses
-   - Once complete, the application will return to recognition mode
+4. The system will:
+   - Start the webcam for real-time face recognition
+   - Display the recognized person's name and confidence score on the video feed
 
-3. **Other Controls**:
-   - Press 'c' to cancel registration (when in registration mode)
-   - Press 'q' to quit the application
+5. Press 'q' to quit the application.
 
-## Project Structure
+## Testing
 
-- `face_recognition_app.py`: Main application script
-- `train_face_recognition.py`: Script for training the system with custom datasets
-- `face_detector.py`: Face detection using MTCNN
-- `face_embedder.py`: Face embedding extraction using FaceNet
-- `vector_db.py`: Vector database operations using Qdrant
-- `requirements.txt`: Required Python packages
-- `face_db/`: Directory for storing the face database (created automatically)
-- `Dataset/`: Directory containing training images organized by person
+You can test the face recognition system without using a webcam:
+
+```bash
+# Test recognition on a single image
+python test_face_recognition.py --image path/to/image.jpg
+
+# Test recognition on all images in a directory
+python test_face_recognition.py --dir path/to/person_directory
+```
+
+The test script provides:
+- Visual display of detected faces and recognition results
+- Detailed match information with confidence scores
+- Accuracy statistics when testing multiple images
 
 ## How It Works
 
-### Training Process
+1. **Face Detection**: MTCNN is used to detect faces in each frame from the webcam.
 
-1. **Dataset Organization**: Images are organized in folders named after each person
-2. **Face Detection**: MTCNN detects faces in each training image
-3. **Feature Extraction**: FaceNet extracts a 512-dimensional embedding vector for each detected face
-4. **Database Storage**: Embeddings are stored in Qdrant with person names as labels
+2. **Face Embedding**: The detected face is cropped and processed through a pre-trained InceptionResnetV1 model to extract a 512-dimensional face embedding vector.
 
-### Recognition Process
+3. **Vector Database**: Qdrant is used to store face embedding vectors along with the corresponding person's name. During recognition, the system performs a similarity search to find the closest match.
 
-1. **Face Detection**: MTCNN is used to detect faces in each frame from the webcam
-2. **Feature Extraction**: FaceNet (InceptionResnetV1) extracts a 512-dimensional embedding vector for each detected face
-3. **Vector Database**: Qdrant performs similarity search against stored embeddings
-4. **Recognition**: Detected faces are compared with stored embeddings to identify the person
+4. **Recognition**: The system displays the name of the recognized person along with a confidence score. If the confidence is below a threshold, the face is labeled as "Unknown".
 
 ## Customization
 
-- Adjust the confidence threshold for face detection (higher values are more strict)
-- Adjust the similarity threshold for face recognition (higher values require closer matches)
-- Modify the number of face images collected during registration by changing `max_registration_faces` in the code
+- Adjust the recognition threshold in the `recognize_face` function to control the strictness of face matching.
+- Modify the preprocessing steps in the `preprocess_face` function if needed.
+- Change the webcam device index in `cv2.VideoCapture(0)` if you have multiple cameras.
 
 ## Troubleshooting
 
-### Training Issues
-
-- **No faces detected in training images**: Ensure images contain clear, front-facing faces
-- **Multiple faces in training images**: The system will use only the face with highest confidence
-- **Training is slow**: Consider using a GPU for faster processing
-- **Poor recognition after training**: Try increasing the number of training images per person
-
-### Recognition Issues
-
-- **Webcam not working**: Make sure your webcam is properly connected and not being used by another application
-- **Slow performance**: Consider using a GPU or reducing the resolution of the webcam feed
-- **False recognitions**: Increase the similarity threshold for stricter matching
-- **Failed detections**: Decrease the confidence threshold for more lenient face detection
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- If you encounter issues with the webcam, make sure your camera is properly connected and accessible.
+- For CUDA-related errors, ensure you have the correct version of PyTorch installed for your CUDA version.
+- If face detection is slow, consider reducing the resolution of the webcam feed.
