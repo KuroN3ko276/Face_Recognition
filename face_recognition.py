@@ -8,6 +8,8 @@ from PIL import Image
 import torchvision.transforms as transforms
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+import matplotlib.pyplot as plt
+import time
 
 # Initialize face detector
 detector = MTCNN()
@@ -85,7 +87,7 @@ def check_face_database():
         return False
 
 # Function to recognize face
-def recognize_face(face_img, threshold=0.6):
+def recognize_face(face_img, threshold=0.8):
     # Get embedding
     embedding = get_face_embedding(face_img)
 
@@ -126,6 +128,10 @@ def webcam_face_recognition(webcam_width=640, webcam_height=480, process_every_n
 
     # Store detected faces for display between processing frames
     detected_faces = []
+
+    # Store confidence values and timestamps for plotting
+    confidence_data = []
+    start_timestamp = time.time()
 
     while True:
         # Read frame
@@ -169,12 +175,19 @@ def webcam_face_recognition(webcam_width=640, webcam_height=480, process_every_n
                     # Recognize face
                     person_name, confidence = recognize_face(face_img)
 
+                    # Print confidence to terminal
+                    print(f"Detected: {person_name}, Confidence: {confidence:.4f}")
+
                     # Store face data for display
                     detected_faces.append({
                         'box': (x, y, w, h),
                         'name': person_name,
                         'confidence': confidence
                     })
+
+                    # Store confidence data for plotting
+                    current_time = time.time() - start_timestamp
+                    confidence_data.append((current_time, person_name, confidence))
 
         # Display all detected faces (from current or previous frames)
         for face_data in detected_faces:
@@ -200,6 +213,38 @@ def webcam_face_recognition(webcam_width=640, webcam_height=480, process_every_n
     # Release resources
     cap.release()
     cv2.destroyAllWindows()
+
+    # Plot confidence graph if data was collected
+    if confidence_data:
+        print("Generating confidence graph...")
+
+        # Create a figure and axis
+        plt.figure(figsize=(12, 6))
+
+        # Group data by person name
+        person_data = {}
+        for time_val, name, conf in confidence_data:
+            if name not in person_data:
+                person_data[name] = {'times': [], 'confidences': []}
+            person_data[name]['times'].append(time_val)
+            person_data[name]['confidences'].append(conf)
+
+        # Plot data for each person with different colors
+        for name, data in person_data.items():
+            plt.plot(data['times'], data['confidences'], 'o-', label=f"{name}")
+
+        # Add labels and title
+        plt.xlabel('Time (seconds)')
+        plt.ylabel('Confidence Score')
+        plt.title('Face Recognition Confidence Over Time')
+        plt.grid(True)
+        plt.legend()
+
+        # Show the plot
+        plt.tight_layout()
+        plt.show()
+    else:
+        print("No confidence data collected for plotting.")
 
 # Main execution
 if __name__ == "__main__":
