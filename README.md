@@ -69,14 +69,28 @@ python register_faces.py --person PersonName --reset-person
 3. Run the face recognition script:
 
 ```bash
+# Run with default settings
 python face_recognition.py
+
+# Run with custom performance settings to reduce lag
+python face_recognition.py --width 480 --height 360 --skip 4
 ```
 
-4. The system will:
+4. Performance optimization options:
+   - `--width`: Webcam width resolution (default: 640)
+   - `--height`: Webcam height resolution (default: 480)
+   - `--skip`: Process every n frames (default: 3)
+
+   For better performance on slower hardware:
+   - Reduce resolution (e.g., 480x360 or 320x240)
+   - Increase the skip value (e.g., 4 or 5)
+
+5. The system will:
    - Start the webcam for real-time face recognition
    - Display the recognized person's name and confidence score on the video feed
+   - Show the current FPS (frames per second)
 
-5. Press 'q' to quit the application.
+6. Press 'q' to quit the application.
 
 ## Testing
 
@@ -115,4 +129,11 @@ The test script provides:
 
 - If you encounter issues with the webcam, make sure your camera is properly connected and accessible.
 - For CUDA-related errors, ensure you have the correct version of PyTorch installed for your CUDA version.
-- If face detection is slow, consider reducing the resolution of the webcam feed.
+- If you experience lag or stuttering:
+  - Use the performance optimization options: `--width`, `--height`, and `--skip`
+  - Try lower resolutions like 480x360 or 320x240
+  - Increase the `--skip` value to 4 or 5 to process fewer frames
+  - Check your CPU and GPU usage while running the application
+  - Close other resource-intensive applications
+  - If using a laptop, ensure it's plugged in and using the high-performance power plan
+- The FPS counter can help you monitor performance improvements when adjusting settings
